@@ -7,6 +7,11 @@ Optional:
     - credential (block):
         - key (required)
         - value (required)
+    - timeouts (block):
+        - create (optional)
+        - delete (optional)
+        - read (optional)
+        - update (optional)
 EOT
 
   type = map(object({
@@ -15,7 +20,20 @@ EOT
       key   = string
       value = string
     })))
+    timeouts = optional(object({
+      create = optional(string)
+      delete = optional(string)
+      read   = optional(string)
+      update = optional(string)
+    }))
   }))
-  # Note: 2 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
+  validation {
+    condition = alltrue([
+      for k, v in var.synchronization_secrets : (
+        can(regex("^(/[^/]+/[^/]+)+$", v.service_principal_id))
+      )
+    ])
+    error_message = "must be a valid Azure resource ID"
+  }
 }
 
